@@ -32,8 +32,8 @@ def get_fit_img_shape_and_dtype(img_name):
     print("Image type: " + str(img.dtype))
 
 
-def verify_pixel(image_number=1, filter="I", pixel_pos=[0, 0], 
-                 master_bias_fname="master_bias.fit" , 
+def verify_pixel(prefix_obj_name="WASP-33-", image_number=1, filter="I", 
+                 pixel_pos=[0, 0], master_bias_fname="master_bias.fit" , 
                  master_ff_fname="master_ff_I.fit", 
                  exposure_times_used=True):
     """
@@ -43,6 +43,8 @@ def verify_pixel(image_number=1, filter="I", pixel_pos=[0, 0],
     the given filter), the object pixel values, and the exposure 
     times (as an option).
     Inputs:
+      - prefix_obj_name: prefix of image containing the pixel to verify
+                         (before the image number)
       - image_number: number of image where the pixel to verify is located
       - filter: filter in which the image was acquired: "I" or "B"
       - pixel_pos: list of two integers indicating the pixel position
@@ -62,8 +64,8 @@ def verify_pixel(image_number=1, filter="I", pixel_pos=[0, 0],
     y = pixel_pos[1]
 
     # Object image names:
-    obj_img_fname = "WASP-33-" + img_num_str + filter + ".fit"
-    obj_img_norm_fname = "WASP-33-" + img_num_str + filter + "_norm.fit"
+    obj_img_fname = prefix_obj_name + img_num_str + filter + ".fit"
+    obj_img_norm_fname = prefix_obj_name + img_num_str + filter + "_norm.fit"
 
     print("Image in " + filter)
                 
@@ -94,7 +96,7 @@ def verify_pixel(image_number=1, filter="I", pixel_pos=[0, 0],
     print(val_in_xy_obg_img_norm)
 
     ##########################################################################
-    ### WASP-33-0073I Pixel[x, y] normalized value, 'manually' calculated ####
+    ######### Pixel [x, y] normalized value, freshly calculated ##############
     
     # FF Image Pixel Value
     vals_in_xy_ff = get_values_and_dtype(master_ff_fname, 
@@ -120,15 +122,19 @@ def verify_pixel(image_number=1, filter="I", pixel_pos=[0, 0],
     try:                          
         np.testing.assert_almost_equal(val_in_xy_obg_img_norm, 
                                        just_computed_xy_pix_val_norm, 4)
-    except Exception(e):
-        print(e)
+    except Exception as e:
+        raise(e)
     print("\nThe test has passed:")
     print("Pixel value in normalized image and pixel value freshly" 
           + " calculated are equal")
 
 
 if __name__ == "__main__":
-
+    """ Set here in the "main" the necessary variables"""
+    
+    prefix_obj_name = "WASP-33-"
+    # prefix_obj_name = "Test3_WASP33-"
+    
     print()
     # Image Dimensions and DataType
     get_fit_img_shape_and_dtype("master_bias.fit")
@@ -138,11 +144,11 @@ if __name__ == "__main__":
     #     and freshly calculated pixel value, taking into account the 
     #     master_bias pixel value, the FF pixel value (in the given filter),
     #     the object pixel values, and the exposure times (as an option).  
-    verify_pixel(image_number=53, filter="I", pixel_pos=[253, 2042], 
-                 master_ff_fname="master_ff_I.fit")
+    verify_pixel(prefix_obj_name=prefix_obj_name, image_number=5, filter="I", 
+                 pixel_pos=[1945, 242], master_ff_fname="master_ff_I.fit")
     print("\n")             
-    verify_pixel(image_number=53, filter="B", pixel_pos=[1056, 35], 
-                 master_ff_fname="master_ff_B.fit")
+    verify_pixel(prefix_obj_name=prefix_obj_name, image_number=3, filter="B", 
+                 pixel_pos=[1056, 35], master_ff_fname="master_ff_B.fit")
     print()    
     
 

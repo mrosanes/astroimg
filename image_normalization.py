@@ -64,8 +64,8 @@ def compute_master_ff(master_bias, filter="I", store=True):
     return master_ff_img
 
 
-def norm_imgs_per_filter(master_bias, master_ff, filter="I", 
-                         num_imgs=260, use_exp_times=True):
+def norm_imgs_per_filter(master_bias, master_ff, prefix_obj_name = "WASP-33-", 
+                         filter="I", num_imgs=260, use_exp_times=True):
     """Normalize object images (taken with a given filter) by Bias and FF; 
        Option is given for normalization using the exposure times"""  
     if use_exp_times:
@@ -84,7 +84,7 @@ def norm_imgs_per_filter(master_bias, master_ff, filter="I",
     print("Normalizing object images in filter " + filter + "...")
     for num_img in range(1, num_imgs+1):
         num_img_str = "{0:04}".format(num_img)
-        img_name = "WASP-33-" + num_img_str + filter + ".fit"
+        img_name = prefix_obj_name + num_img_str + filter + ".fit"
         hf = fits.open(img_name); img = hf[0].data; hf.close() 
         if use_exp_times:
             # Normalize by exposure time the object image and the master_FF,
@@ -105,15 +105,32 @@ def norm_imgs_per_filter(master_bias, master_ff, filter="I",
           + " stored\n")
 
 
-def normalize_all_object_images(compute_master_frames=True, num_imgs=260,
-                                use_exp_times=True):
-    """Normalize object images in filters I and B"""
+def normalize_all_object_images(
+        prefix_master_ff="master_ff_", prefix_obj_name="WASP-33", 
+        compute_master_frames=True, num_imgs=260, filters=["I", "B"], 
+        use_exp_times=True):
+    """
+    Normalize object images in given filter/s. Images are normalized 
+    from 1..num_imgs, correlatively.
+    Inputs:
+      - prefix_obj_name = Prefix in which begin the .fit files which will 
+          be normlized (default: "WASP-33-") 
+      - compute_master_frames: Default is True. If False, the master frames
+          from Bias and FF will be read from its corresponding ".fit" files
+      - num_imgs: Number of images to be normalized
+      - filters: array of filter/s in which were acquired the images 
+          to be decoded (default: ["I", "B"])
+      - use_exp_times: usage (or not) of exposure times to normalize the 
+                       images (default: True)
+    """
     
     if compute_master_frames:
         # Computing master frames if they are not still available
         master_bias = compute_master_bias()
-        master_ff_I = compute_master_ff(master_bias, filter="I")
-        master_ff_B = compute_master_ff(master_bias, filter="B")
+        if "I" in filters:
+            master_ff_I = compute_master_ff(master_bias, filter="I")
+        if "B" in filters:
+            master_ff_B = compute_master_ff(master_bias, filter="B")
     else:
         # Reading master frames if they are already available
         # Reading 'master_bias.fit'
@@ -121,33 +138,51 @@ def normalize_all_object_images(compute_master_frames=True, num_imgs=260,
         hf = fits.open("master_bias.fit")
         master_bias = hf[0].data; hf.close()
         print("Master_Bias has been read")
-        print("Reading master_ff_I...")
-        hf = fits.open("master_ff_I.fit")
-        master_ff_I = hf[0].data; hf.close()
-        print("master_ff_I has been read")
-        print("Reading master_ff_B...")
-        hf = fits.open("master_ff_B.fit")
-        master_ff_B = hf[0].data; hf.close()
-        print("master_ff_B has been read\n")
         
-    # Normalize object images taken with filter I
-    norm_imgs_per_filter(master_bias, master_ff_I, filter="I", 
-                         num_imgs=num_imgs, use_exp_times=use_exp_times)
-    # Normalize object images taken with filter B
-    norm_imgs_per_filter(master_bias, master_ff_B, filter="B", 
-                         num_imgs=num_imgs, use_exp_times=use_exp_times)
+        if "I" in filters:
+            print("Reading master_ff_I...")
+            master_ff_I_name = prefix_master_ff + "I" + ".fit"
+            hf = fits.open(master_ff_I_name)
+            master_ff_I = hf[0].data; hf.close()
+            print("master_ff_I has been read")
+            
+        if "B" in filters:
+            print("Reading master_ff_B...")
+            master_ff_B_fname = prefix_master_ff + "B" + ".fit"
+            hf = fits.open(master_ff_B_fname)
+            master_ff_B = hf[0].data; hf.close()
+            print("master_ff_B has been read\n")
+     
+    if "I" in filters:  
+        # Normalize object images taken with filter I
+        norm_imgs_per_filter(master_bias, master_ff_I, 
+                             prefix_obj_name=prefix_obj_name, filter="I", 
+                             num_imgs=num_imgs, use_exp_times=use_exp_times)
+    if "B" in filters:
+        # Normalize object images taken with filter B
+        norm_imgs_per_filter(master_bias, master_ff_B, 
+                             prefix_obj_name=prefix_obj_name, filter="B", 
+                             num_imgs=num_imgs, use_exp_times=use_exp_times)
 
 
 if __name__ == "__main__":
+    """Assign here, in the main, the variables that shall be used"""
+    
     begin_time = datetime.datetime.now()
     
-    # Update this variable with the number of images to be normalized
-    num_obj_imgs_to_normalize = 260
-    
+    # Assign the prefix of your object dataset images:
+    prefix_obj_name = "WASP-33-"
+    #prefix_obj_name = "Test3_WASP33-"
+    # Assign the highest number of the image to be normalized
+    num_images_to_normalize = 9
+    # Assign the list of filter/s that has/have been used for
+    #    acquiring the raw images. Choices are: ["I", "B"], ["I"], or ["B"] 
+    filters = ["I", "B"]
+
     # Normalize all object images
-    normalize_all_object_images(compute_master_frames=True, 
-                                num_imgs=num_obj_imgs_to_normalize,
-                                use_exp_times=True)
+    normalize_all_object_images(
+        prefix_obj_name=prefix_obj_name, compute_master_frames=False, 
+        num_imgs=num_images_to_normalize, filters=filters, use_exp_times=True)
     
     end_time = datetime.datetime.now()
     print(end_time - begin_time)
