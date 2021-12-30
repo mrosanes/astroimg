@@ -6,7 +6,7 @@ import numpy as np
 from astropy.io import fits
 
 
-def get_values_and_dtype(img_name, values_positions=[[0, 0],]):
+def get_values(img_name, values_positions=[[0, 0],]):
     """Helper Function:
     Get values and data types from a given fit image. It verifies that 
     the values obtained in the images are the expected ones. 
@@ -82,16 +82,16 @@ def verify_pixel(prefix_obj_name="WASP-33-", image_number=1, filter="I",
     ##########################################################################
     
     # master_bias value for pixel [x, y]
-    vals_in_xy_bias = get_values_and_dtype(
-        master_bias_fname, values_positions=[pixel_pos])
+    vals_in_xy_bias = get_values(master_bias_fname, 
+                                 values_positions=[pixel_pos])
     val_in_xy_bias = vals_in_xy_bias[0] 
     
     ##########################################################################
     ####### Value on pixel [x, y] on computed obj_img_norm_fname #############    
 
     print(obj_img_norm_fname + " pixel " + str(pixel_pos) + " value:")
-    vals_in_xy_obg_img_norm = get_values_and_dtype(
-        obj_img_norm_fname, values_positions=[pixel_pos])
+    vals_in_xy_obg_img_norm = get_values(obj_img_norm_fname, 
+                                         values_positions=[pixel_pos])
     val_in_xy_obg_img_norm = vals_in_xy_obg_img_norm[0]                                               
     print(val_in_xy_obg_img_norm)
 
@@ -99,13 +99,13 @@ def verify_pixel(prefix_obj_name="WASP-33-", image_number=1, filter="I",
     ######### Pixel [x, y] normalized value, freshly calculated ##############
     
     # FF Image Pixel Value
-    vals_in_xy_ff = get_values_and_dtype(master_ff_fname, 
-                                         values_positions=[pixel_pos])
+    vals_in_xy_ff = get_values(master_ff_fname, 
+                               values_positions=[pixel_pos])
     val_in_xy_ff = vals_in_xy_ff[0]
     
     # Raw Object Image Pixel Value (before normalization)                                
-    vals_in_xy_obj_img = get_values_and_dtype(
-        obj_img_fname, values_positions=[pixel_pos])
+    vals_in_xy_obj_img = get_values(obj_img_fname, 
+                                    values_positions=[pixel_pos])
     val_in_xy_obj_img = vals_in_xy_obj_img[0]
 
     numerator = exp_time_ff * (val_in_xy_obj_img - val_in_xy_bias)
