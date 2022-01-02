@@ -3,7 +3,7 @@
 from astropy.io import fits
 
 # Indicate here the name of the image fits file:
-fits_file_name = "Flat_1x1-0005I.fit"
+fits_file_name = "WASP-33-0001I_norm.fit"
 
 # fits_handler: handler for working with the fits file
 fits_handler = fits.open(fits_file_name)
