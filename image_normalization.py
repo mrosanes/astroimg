@@ -15,12 +15,28 @@ from astropy.io import fits
 
 
 def img2fit(image, filename):
-        # Store master_bias in a fits file
+        # Store image in new fits file
         img_for_fits = fits.PrimaryHDU(image)
         img_handler_list = fits.HDUList([img_for_fits])
         img_handler_list.writeto(filename, overwrite=True)
-
         
+   
+def img2normfit(header, image, filename):
+        # Store image in new normalized fits file
+        img2fit(image, filename)
+        
+        # Write header on normalized files
+        fits_norm_handler = fits.open(filename, mode="update")
+        header_norm = fits_norm_handler[0].header
+        header_norm["DATE-OBS"] = header["DATE-OBS"]
+        header_norm["EXPOSURE"] = header["EXPOSURE"]
+        header_norm["JD"] = header["JD"]
+        header_norm["JD-HELIO"] = header["JD-HELIO"]
+        header_norm["AIRMASS"] = header["AIRMASS"]
+        fits_norm_handler[0].header = header_norm
+        fits_norm_handler.close()
+
+
 def compute_master_bias(store=True):
     print("Computing Master_Bias...")
     imagesbias = []
@@ -84,8 +100,17 @@ def norm_imgs_per_filter(master_bias, master_ff, prefix_obj_name = "WASP-33-",
     print("Normalizing object images in filter " + filter + "...")
     for num_img in range(1, num_imgs+1):
         num_img_str = "{0:04}".format(num_img)
+        
+        # Assign filenames        
         img_name = prefix_obj_name + num_img_str + filter + ".fit"
-        hf = fits.open(img_name); img = hf[0].data; hf.close() 
+        img_norm_fname = os.path.splitext(img_name)[0] + "_norm.fit"
+        
+        # Read header and image
+        hf = fits.open(img_name)
+        header_raw = hf[0].header
+        img = hf[0].data
+        hf.close()
+
         if use_exp_times:
             # Normalize by exposure time the object image and the master_FF,
             # before applying the object image normalization by master_Bias 
@@ -95,8 +120,8 @@ def norm_imgs_per_filter(master_bias, master_ff, prefix_obj_name = "WASP-33-",
             img_norm = img_norm_exp / master_ff_norm_exp
         else:
             img_norm = (img - master_bias) / master_ff
-        img_norm_fname = os.path.splitext(img_name)[0] + "_norm.fit"
-        img2fit(img_norm, img_norm_fname)
+        
+        img2normfit(header_raw, img_norm, img_norm_fname)
         if num_img%20 == 0:
             print(str(num_img) 
                   + " object images in filter " + filter
@@ -174,14 +199,14 @@ if __name__ == "__main__":
     prefix_obj_name = "WASP-33-"
     #prefix_obj_name = "Test3_WASP33-"
     # Assign the highest number of the image to be normalized
-    num_images_to_normalize = 9
+    num_images_to_normalize = 260
     # Assign the list of filter/s that has/have been used for
     #    acquiring the raw images. Choices are: ["I", "B"], ["I"], or ["B"] 
     filters = ["I", "B"]
 
     # Normalize all object images
     normalize_all_object_images(
-        prefix_obj_name=prefix_obj_name, compute_master_frames=False, 
+        prefix_obj_name=prefix_obj_name, compute_master_frames=True, 
         num_imgs=num_images_to_normalize, filters=filters, use_exp_times=True)
     
     end_time = datetime.datetime.now()
